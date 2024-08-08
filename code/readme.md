@@ -1,17 +1,15 @@
 How to run the code:
-Step 1: copy Tilemain.m, constant.m, job_group.slurm, and run_change_group_slurm.sh to your work directory.
-Step 2: run ./run_change_group_slurm.sh
+Step 1: copy template/* to your work directory.
+Step 2: Update paramters and prepare tilelist
+Step 3: run ./run_change_group_pgc_par.sh (see also template/steps.sh)
 
 Parameters need to be changed:
 1\ In constant.m, change stripdir and codedir.
 e.g. stripdir='/fs/project/howat.4/EarthDEM/region*/strips_unf/2m/';
          where stripdir is the directory of EarthDEM data.
-2\ In run_change_group.sh
-Modify the xid and yid to the desired tile that you'd like to run. e.g.
-if you'd like to run code for tile 41_16_1_1, let yid=41;xid=16;xids=1;yids=1. 
 
 Data/Software preparation:
-1\ setsm software should be installed and executable in the command line. 
+1\ (Optional) setsm software may be installed and executable in the command line if you choose setsm for DEM coregistration. 
 
 #######################
 Output files: Elevation change data for an area size of 2 km by 2km.
