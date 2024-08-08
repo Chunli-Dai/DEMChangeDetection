@@ -1,0 +1,16 @@
+#!/bin/sh
+#SBATCH -t 7:00:00
+#SBATCH --mem 160GB 
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -e %j.err
+#SBATCH -o %j.out
+
+#burst
+#SBATCH --account=chunlidai
+#SBATCH --qos=chunlidai-b
+
+#cd $PBS_O_WORKDIR
+pwd
+module load matlab
+exec matlab < Tilemain_nov.m

@@ -1,0 +1,134 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=20:00:00,mem=12gb
+#PBS -e $PBS_JOBID.err
+#PBS -o $PBS_JOBID.out
+#PBS -m n
+
+#Example: qsub -v str1='41_16_1_1_11' ./job_group.pbs ##failed
+#Example: qsub ./job_group.pbs
+
+START=$(date +%s)
+
+echo PBS_O_WORKDIR $PBS_O_WORKDIR
+#cd $PBS_O_WORKDIR
+pwd
+#module load matlab
+
+JOB_ID=$PBS_JOBID
+CORES_PER_NODE=$PBS_NUM_PPN
+
+MATLAB_SETTINGS="-nodisplay -nodesktop -nosplash"
+MATLAB_USE_PARPOOL=false #true
+
+# Load Python/GDAL env if needed
+#set +u
+#source /projects/sciteam/bazu/tools/miniconda3/bin/activate /projects/sciteam/bazu/tools/miniconda3/envs/gdal2
+#set -u
+
+MATLAB_LOGFILE="/u/sciteam/chunli/scratch/chunli/tempdir/example.log"
+
+# Move to working folder.
+# Working folder should be empty to reduce Matlab startup time.
+#cd $PBS_O_WORKDIR #hi
+pwd
+
+
+if true
+then
+
+#str1=$@
+#str1='41_16_1_1_11'
+
+coderundir=`pwd`; #'../../'; # Code with updated parameters for a specific job.
+		 # e.g., /home/chunli/chunliwork/work/landslide/arcticdem_18_russia_cherskly/
+
+str1=$(basename $coderundir)
+coderundir=$(dirname $coderundir)
+coderundir=$(dirname $coderundir)
+
+echo main directory [Code with updated parameters for a specific job] for this region: $coderundir
+
+strtile=${str1:0:9}; # "$yidc"_"$xidc"_"$xidsc"_"$yidsc"
+workdirtile=`pwd` # e.g. /mnt/c/scratch/sciteam/GS_bazu/user/chunli/arcticdem_08_canada_baffin/21_30_2_2/21_30_2_2_05
+cd $workdirtile
+pwd
+
+# run the following 25 subtiles sequentially in one job.
+for (( yidss=1; yidss<=25; yidss++ )) #1:25
+do
+yidssc=`printf "%2.2d" "$yidss"`
+workdir1="$str1"_"$yidssc"  #"$yidc"_"$xidc"_"$xidsc"_"$yidsc"_"$xidssc"_"$yidssc"
+workdir=$workdirtile/$workdir1
+echo yidss $yidssc workdir $workdir
+if [ ! -d $workdir ]
+then
+    mkdir $workdir
+fi
+cd $workdir
+pwd
+
+
+jumpfile=$workdir1"_jump.tif" #e.g., 11_29_2_1_12_22_jump.tif
+if [ -f "$jumpfile" ]; then
+    echo "$jumpfile exists. Continue to the next tile. "
+else
+    echo "$jumpfile does not exist. Carry out the calculation. "
+
+
+ln -fs $coderundir/mat0.mat .
+ln -fs $coderundir/run_Tilemain.sh     # Copy compiled Matlab code.  Jason Li @ 4/13/2021
+ln -fs $coderundir/Tilemain            # Copy compiled Matlab code.  Jason Li @ 4/13/2021
+#ln -fs $coderundir/Tilemain.m .
+#ln -fs $coderundir/constant.m .
+
+#echo $inputtype > input.txt
+echo 1 > input.txt
+echo $workdir1 >> input.txt
+#exec matlab < Tilemain.m #Do Not continue to next iteration.
+#matlab -nodisplay -r "addpath('/home/howat.4/mosaicfunctions'),batch_initializeMosaic(firstTile,lastTile), exit"
+
+# Use compiled matlab instead of checking out new license           Jasonli @ 4/13/2021
+#./run_Tilemain.sh /usr/local/packages/license/matlab/r2020a #loni, parent folder of r2020a/bin
+./run_Tilemain.sh /apps/matlab/r2020a
+#matlab $MATLAB_SETTINGS -r "run ./Tilemain.m, exit"
+
+#avoid remove wrong files
+pwdstr=`pwd`
+pwdstrlast=`echo $(basename $pwdstr)`
+if [ "$pwdstrlast" = "$workdir1" ]; then
+	echo "Strings are equal."
+	echo "Successfully changed to the directory workdir."
+echo Remove files in this directory `pwd`.
+rm -f mat0.mat Tilemain run_Tilemain.sh input.txt test3.mat outliertp[0-9].mat tp[0-9].fig outlierex1.mat sv1.mat jumpstd.pdf jumpstd.fig jump.pdf jump.fig eventtime.pdf eventtime.fig eventtimestd.pdf eventtimestd.fig eventtime_start.fig eventtime_end.fig OverlappingCount_Final.fig Chosenisel.fig jumpfiltered.pdf jumpfiltered.fig jumpfiltered.dat
+#rm -f mat0.mat Tilemain.m input.txt test3.mat outliertp[0-9].mat tp[0-9].fig outlierex1.mat sv1.mat jumpstd.pdf jumpstd.fig jump.pdf jump.fig eventtime.pdf eventtime.fig eventtimestd.pdf eventtimestd.fig eventtime_start.fig eventtime_end.fig OverlappingCount_Final.fig Chosenisel.fig jumpfiltered.pdf jumpfiltered.fig jumpfiltered.dat
+rm -f core.[0-9]*[0-9]
+rm -rf outcoregdem
+rm -f dX4Sg.mat
+rm -f core
+rm -f core.Tilemain*
+else
+	echo "Failed to change to the directory workdir."
+fi
+
+fi #if jumpfile exist
+
+#cd ../  #may go to the: wrong directory including root directory.
+cd $workdirtile/  #more reliable 
+
+done #yidss
+
+#clean up empty folders
+ rmdir "$str1"*
+
+# your logic ends here
+END=$(date +%s)
+DIFF=$(( $END - $START ))  #seconds
+DIFFhr=`awk "BEGIN {printf \"%.2f\n\", $DIFF/3600}"`
+echo job_group.pbs total run time for 25 tiles within $str1 is $DIFFhr hours.
+
+cd $workdirtile/../ # change directory out of $workdirtile e.g. 21_30_2_2
+
+
+fi 
