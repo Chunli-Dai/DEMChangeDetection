@@ -28,3 +28,7 @@ They are Geotiff files, which can be visualized in QGIS (open software). You can
 
 The time data now includes the T1 (date of the closest measurement before change) and T2 (date of the closest measurement after change), and the date format is YYYYMMDD.
 
+#######
+References:
+
+
