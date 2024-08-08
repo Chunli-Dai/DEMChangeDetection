@@ -1,0 +1,315 @@
+#! /bin/bash
+#Plot DEM hillshade and elevation change map
+## Modified from dai.56@ses-euler.asc.ohio-state.edu://0/home/dai.56/share/GRACEEQpub/code/plotjump_Sun_gra_WangRJ_io.gmt
+# Refers to dai.56@ses-euler.asc.ohio-state.edu:/0/home/dai.56/Osuwork/Image/Slippred/eureka/plotlandslide200m.gmt
+# input: DEM hillshade Geotiff file, DEM change Geotiff file, points coordinates file, lines file, boxes file
+
+#module load pgc
+
+#gmtset ANNOT_FONT_SIZE 12
+gmtset HEADER_OFFSET 0.1c
+gmtset HEADER_FONT_SIZE 12
+#gmtset ANNOT_FONT_PRIMARY 0
+gmtset FONT_ANNOT_PRIMARY 12
+gmtset PAPER_MEDIA letter
+gmtset TICK_LENGTH 0.1c
+gmtset LABEL_OFFSET 0.15c
+#gmtset FRAME_WIDTH 0.05
+gmtset FRAME_PEN 1p
+gmtset BASEMAP_TYPE plain
+#gmtset PLOT_DEGREE_FORMAT +ddd
+gmtset COLOR_BACKGROUND gray30
+#hi
+#gmtset FORMAT_GEO_MAP ddd:mm
+gmtset FORMAT_GEO_MAP ddd:mm:ss 
+
+tmp=$1
+if [ ${tmp:0:2} == '-R' ]  #Be compatable to First version
+then
+region=$1
+projection=$2
+ifile=$3
+ofile=$4
+Tscale=$5
+#loneq=$6
+#lateq=$7
+
+echo $region $projection $ifile $ofile $Tscale $loneq $lateq
+
+else # Second version
+if [ $# -lt 2 ]
+then
+  echo "usage 1: $0 demfile changefile "
+  echo "usage 2: $0 demfile changefile region maxT"
+  exit
+fi
+
+demfile=$1
+ifile=$2
+ofile=${ifile//.tif/_gmt.ps} #// replace all matches
+size=4 #4inches width of the figure #$2
+#loneq=$3
+#lateq=$4
+if [ $# -eq 3 ]
+then
+region=$3
+elif [ $# -eq 4 ]
+then
+region=$3
+maxT=$4
+fi
+
+ln -fs /home/dai.56/arcticdemapp/landslide/code1/jet2.cpt .
+if [ -z $maxT ]
+then
+#Old way: from xyz text file
+#maxT=`minmax $ifile | awk -F'[</>]' '{print $8<0?-$8:$8,$9<0?-$9:$9,$11<0?-$11:$11, $12<0?-$12:$12, $14<0?-$14:$14, $15<0?-$15:$15}' |awk '{printf "%.1f",($1+$2+$3+$4+$5+$6)/6.}' `
+
+#New way: from Geotiff file
+#gdalinfo -mm -stats givensite_rate_lat.tif |grep StdDev=
+#  Minimum=-765.319, Maximum=608.622, Mean=-0.048, StdDev=0.631
+maximumT=`gdalinfo -mm -stats $ifile |grep StdDev=| awk -F'[=,]' '{print $4 }'|xargs`
+meanT=`gdalinfo -mm -stats $ifile |grep StdDev=| awk -F'[=,]' '{print $6 }'|xargs`
+stdT=`gdalinfo -mm -stats $ifile |grep StdDev=| awk -F'[=,]' '{print $8 }'|xargs`
+#choose mean+-2*std
+maxT1=`echo 1| awk -F'\t' 'function abs(x){return ((x < 0.0) ? -x : x)} {print abs('$meanT'+2*'$stdT')}'`
+maxT2=`echo 1| awk -F'\t' 'function abs(x){return ((x < 0.0) ? -x : x)} {print abs('$meanT'-2*'$stdT')}'`
+maxT=`echo $maxT1 $maxT2 |awk '{printf "%f",($2-$1) < 0 ? $1:$2}'`
+
+# Choose the maxT every other 4 
+maxT=`echo $maxT |awk '{printf "%e",$1}' |awk -F'[e]' '{printf "%d %f", ($1*10)/4,$2-1}' |awk '{printf "%f", $1*4*10.^$2}'`
+fi
+dT=`echo $maxT |awk '{print $1/200.}'`
+Tscale=-$maxT/$maxT/$dT
+
+maxT=`echo $Tscale |awk -F/ '{print $2}'`
+intv=`echo $maxT | awk '{printf "%e",$1/2.}'`
+
+#if nov, std, Tscale=0/$maxT/$dT
+SUB='nov';
+if [[ "$ifile" == *"nov"* || "$ifile" == *"std"* ]]; then
+  Tscale=0/$maxT/$dT
+  intv=`echo $maxT | awk '{printf "%e",$1/4.}'`
+fi
+
+#region='-R-50.077298/-49.81/64.8167/65'
+if [ -z $region ]
+then
+#region=`minmax $ifile |awk -F'[</>]' '{printf "-R%f/%f/%f/%f", $5,$6,$2,$3}'`
+# trim leading and trailing spaces: echo "   lol  " | xargs
+minlon=`gdalinfo $ifile |grep "Lower Left"|awk -F'[,()]' '{print $2 }'|xargs`
+minlat=`gdalinfo $ifile |grep "Lower Left"|awk -F'[,()]' '{print $3 }'|xargs`
+maxlon=`gdalinfo $ifile |grep "Upper Right"|awk -F'[,()]' '{print $2 }'|xargs`
+maxlat=`gdalinfo $ifile |grep "Upper Right"|awk -F'[,()]' '{print $3 }'|xargs`
+region=-R"$minlon"/$maxlon/$minlat/$maxlat
+fi
+meanlon=`echo $region |awk -F'[R/]' '{printf "%f", ($2+$3)/2}' `
+minlon=`echo $region |awk -F'[R/]' '{printf "%f", $2}' `
+maxlon=`echo $region |awk -F'[R/]' '{printf "%f", $3}' `
+minlat=`echo $region |awk -F'[R/]' '{printf "%f", $4}' `
+maxlat=`echo $region |awk -F'[R/]' '{printf "%f", $5}' `
+#projection='-JQ'"$meanlon"'/'"$size"'i'
+projection='-JM'"$size"'i'
+
+#ofile=`echo $ifile | awk -F'[.]' '{printf "%s'.ps'",$1}'`
+
+echo $region $projection $ifile $ofile $Tscale 
+fi
+
+#Grid size
+if false
+then
+lons=`sed -n '1p' $ifile |awk '{print $2}'`
+lont=`sed -n '2p' $ifile |awk '{print $2}'`
+DX=`echo $lons $lont |awk '{printf "%f",($2-$1) < 0 ? -($2-$1):($2-$1)}'`
+#lats=`grep $lons $ifile | sed -n '1p' |awk '{print $1}'`
+#latt=`grep $lons $ifile | sed -n '2p' |awk '{print $1}'`
+lats=`grep ' '$lons' ' $ifile | sed -n '1p' |awk '{print $1}'`
+latt=`grep ' '$lons' ' $ifile | sed -n '2p' |awk '{print $1}'`
+DY=`echo $lats $latt |awk '{printf "%f",(-$2+$1)}'`
+fi
+
+#xtick spacing
+DY=`echo 1|awk '{printf "%.2f", ( '$maxlat' - '$minlat' )/4}'`
+DX=`echo 1|awk '{printf "%.2f", ( '$maxlon' - '$minlon' )/4}'`
+DX= 0.0083 ; DY= 0.0021 #hi
+echo DX= $DX DY= $DY intv=$intv
+
+# compute the height of the figure
+#size=`echo $projection|awk -F'[/i]' '{print $2}'` #width of a single figure
+lonr=`echo $region |awk -F'[R/]' '{printf "%e",($3-$2)*(cos('$minlat'*3.14/180))}'` #convert to distance comparable to delta latitude
+latr=`echo $region |awk -F'[R/]' '{printf "%e",$5-$4}'`
+echo size delta_lon delta_lat $size $lonr $latr
+sizeh=`echo 1 |awk '{printf "%f",'$latr'/'$lonr'*'$size'+2.0}'`
+sizew=`echo 1 |awk '{printf "%f", '$size'+2.0}'`
+echo 'The height of the figure in inches: ' $sizeh
+echo 'The width of the figure in inches: ' $sizew
+gmtset PAPER_MEDIA      = Custom_"$sizeh"ix"$sizew"i
+gmtset X_ORIGIN         = 1.2i
+gmtset Y_ORIGIN         = 1.2i
+
+base=base.ps
+
+# base figure
+if true
+then
+
+#demfile=demmosaic_lat.tif
+
+#makecpt -T0/1000/100 -Cgray.cpt -Z  > topo.cpt
+#makecpt -T-200/900/100 -Cmby.cpt -Z > topo.cpt
+
+if [ $# -eq 4 ] #manual range
+then
+maximumH=2000
+else
+maximumH=`gdalinfo -mm -stats $demfile |grep StdDev=| awk -F'[=,]' '{print $4 }'|xargs`
+fi
+maxH=`echo $maximumH |awk '{printf "%e",$1}' |awk -F'[e]' '{printf "%d %f", ($1*10)/4,$2-1}' |awk '{printf "%f", $1*4*10.^$2}'`
+dH=`echo $maxH |awk '{print $1/200.}'`
+Hscale=0/$maxH/$dH
+echo makecpt -T$Hscale -Cgray.cpt -Z  > topo.cpt
+makecpt -T$Hscale -Cgray.cpt -Z  > topo.cpt
+
+#psbasemap $region $projection -Ba"$DX"/a"$DY"WSne:.: -K -V  > $base #hi
+psbasemap $region $projection -Ba30s/a20sWSne:.: -K -V  > $base #hi
+#awk '{print $2, $1,$3}' demmosaicWV01_20140813.dat > xy
+#surface xy  $region -I0.6s/0.1s -Gban.grd
+grdconvert $demfile ban.grd
+grdgradient ban.grd -A300 -Gsrtm.grad -Ne0.6
+gmt grdhisteq srtm.grad -Ghillshade-hist.nc -N -V
+gmt grdmath hillshade-hist.nc 2 DIV = hillshade-int.nc
+#grdgradient ban.grd -A90/90 -Gsrtm.grad -Ne0.7 
+grdimage ban.grd -B -R -J -K -O -V -Ctopo.cpt -Ihillshade-int.nc >> $base
+if false
+then
+psxy temp -J -R -B -m -O -W0.1p,gray20 -V -K >> $base
+pscoast -R $projection -I2/1.2p,lightblue -I1/1.2p,lightblue -N1/1p,black -Slightblue -Di -W -K -O -V >> $base
+fi
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#exit
+fi
+
+#makecpt -T-3/3/0.1 -Cjet2.cpt -Z > trend.cpt
+if [[ "$ifile" == *"nov"* || "$ifile" == *"std"* || "$ifile" == *"jump"* ]]; then
+makecpt -T$Tscale -Cjet2.cpt -Z  > trend.cpt
+else #rate
+makecpt -T$Tscale -Cjet2.cpt -Z -I > trend.cpt
+fi
+
+cp $base $ofile
+
+psbasemap $region $projection -B -K -O -V >>$ofile
+#awk '{if ($3<0) print $2, $1,$3}' jumpf3.dat > xy   #mm
+#awk '{print $2, $1,$3}' trenddf.txt > xy   #mm
+#xyz2grd xy $region -I0.6s/0.1s -Gx.grd  #1s =30meter
+grdconvert $ifile x.grd
+grdimage x.grd -Ctrend.cpt -J -R -V -t30 -Q -K -O >> $ofile
+#pscoast -R $projection -Slightblue -Di -W -K -O -V >> $ofile
+if false
+then
+pscoast -R $projection -Ia/1.2p,lightblue -I1/1.2p,lightblue -N1/1p,black -Slightblue -Di -W -K -O -V >> $ofile
+fi
+
+# plot scale or not
+if true
+then
+psxy $region $projection -Sc0.1i -W2.0p,white -K -O -V >>$ofile  << END
+#-1.4118490e+02  6.0178293e+01 
+END
+
+psvelo $region $projection -Se0.01/0.95/25 -O -W2.0p,black -L -V -K -P >> $ofile << END
+#Long.    Lat.   Vu     σVu
+#-141.200 60.205 10 -40  0 0  0
+END
+
+#distance scale 0.0104 =200m
+#scale=500;lat=60;scale/(6371e3*cos(lat*pi/180))*180/pi
+#scale=4000; scalec='4 km'
+#1/6 of the entire range along longitude.
+scale=`echo 1|awk '{printf "%f", ('$maxlon' - '$minlon')*3.14/180*(6371e3*cos('$minlat'*3.14/180))*1/6/1e3}'`
+#in km
+# Choose the scale every other 5 or 4 
+scale=`echo $scale |awk '{printf "%e",$1}' |awk -F'[e]' '{printf "%d %f", ($1*10)/4,$2-1}' |awk '{printf "%f", $1*4*10.^$2}'`
+if (( $(echo "$scale < 1" |bc -l) ))
+then
+scalec=`echo $scale|awk '{printf "%d m", $1*1e3}'`
+else #km
+scalec=`echo $scale km`
+fi
+scale=1; scalec='1 km' #hi
+scale=0.5; scalec='500 m' #hi
+echo $scalec scalec
+
+scale=`echo $scale |awk '{print $1*1e3}'` #km to m for conversion to degrees
+latl=`echo $region |awk -F'[R/]' '{printf "%e", $4+($5-$4)/7}' `
+lonl=`echo $region |awk -F'[R/]' '{printf "%e", $2+($3-$2)/5/2}' `
+dlon=`echo $latl $scale |awk '{printf "%e", $2/(6371e3*cos($1*3.14/180))*180/3.14}'`
+lonr=`echo $lonl $dlon | awk '{printf "%e", $1+$2}' `
+lonm=`echo $lonl $dlon | awk '{printf "%e", $1+$2/2}' `
+latu=`echo $latl $dlon | awk '{printf "%e", $1+$2/10}' `
+
+echo $scale $latl $latu $dlon $lonl $lonr $lonm
+echo $lonl $latl
+echo $lonr $latl
+
+if [[ "$ifile" == *"nov"* || "$ifile" == *"std"* ]]; then
+color='white'
+else
+color='black'
+fi
+
+if true #auto #hi
+then
+psxy $region $projection -W2.0p,$color -K -O -V >>$ofile  << END
+$lonl $latl
+$lonr $latl
+END
+
+else #manual
+psxy $region $projection -W2.5p,$color -K -O -V >>$ofile  << END
+$lonl 52.80501
+$lonr 52.80501
+END
+fi
+#echo $lonm $latu 12 0 0 MC $scalec | pstext -R -S1.5p -J -K -O  >>  $ofile
+echo $lonm $latu $scalec | pstext -R -F+f12p,Helvetica,$color -J -K -O  >>  $ofile
+
+#End of scale
+
+fi
+
+color='white'
+color='black'
+pointfile='pointfile.txt'
+linefile='linefile.txt'
+boxfile='boxfile.txt'
+
+psxy $linefile $region $projection -W1.0p,$color -K -O -V >>$ofile
+#psxy $pointfile $region $projection -Sc0.1i -W1.0p,white -K -O -V >>$ofile
+psxy $pointfile $region $projection -Sc0.06i -W1.0p,white -K -O -V >>$ofile
+#box -49.962208/-49.82/64.904586/64.954309'
+psxy $boxfile $region $projection -W1.0p,black,-- -K -O -V >>$ofile 
+
+#plot mass flow 
+psxy deposit20200622Waythomas.gmt $region $projection -W1.0p,black,dashed -K -O -V >>$ofile
+#psxy rimloss2020.gmt $region $projection -W1.0p,black -K -O -V >>$ofile
+#psxy craterdeposit2020.gmt $region $projection -W1.0p,black -K -O -V >>$ofile
+
+psxy laharlavaSmith2005.gmt $region $projection -W1.0p,blue -K -O -V >>$ofile
+psxy laharSmith2005.gmt $region $projection -W1.0p,magenta -K -O -V >>$ofile
+psxy lavaSmith2005.gmt  $region $projection -W1.0p,red -K -O -V >>$ofile
+
+psxy lavaflowboundary.gmt $region $projection -W1.0p,black -K -O -V >>$ofile
+
+x=`echo 1 |awk '{printf "%f", '$size'/2}'`
+len=`echo 1 |awk '{printf "%f", '$size'*0.9}'`
+psscale -E -Ctrend.cpt -D"$x"i/-0.5i/"$len"i/0.1ih -B$intv::/:: -O --MAP_LABEL_OFFSET=-1.3c --FONT_LABEL=10 --MAP_FRAME_PEN=0.3p >> $ofile
+
+#ps2raster -P -Tf $ofile  #Looks right, when imported to word
+
+#ps2raster $ofile -Tj -E720 -A
+#ps2raster $ofile -Tj -A -P
+psconvert $ofile -Tj -A -P
+#rm -f $ofile
+
