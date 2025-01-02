@@ -1,12 +1,8 @@
 #/bin/sh -f
-# 
-# Modified from /home/dai.56/chunli/scripts/run_overlap_strip.sh 
-# Modified based on run_change2.sh (November 2020)
-# Changes: run 25 subtiles in one job to reduce the total number of jobs. 
 
-inputtype=3; 
-inputtype=1; 
-inputtype=5;
+#inputtype=3; 
+#inputtype=1; 
+inputtype=3;
 # 1 %based on input xid etc.
 # 2 %find the block based on input coordinates;
 # 3 %Use a rectangle box around the input coordinates;
@@ -18,7 +14,7 @@ file='aoi.txt'
 nline=`wc -l < $file`
 echo Total number of sites: $nline.
 #5 11 12 16 17 18 22 24 25
-for (( i=11; i<=$nline; i++ )) #1:80 $nline
+for (( i=1; i<=$nline; i++ )) #1:80 $nline
 #for i in 1 22 25
 do 
 latloneq=`sed -n ''$i'p' aoi.txt |awk  -F' ' '{ print $1, $2 }'`
@@ -298,7 +294,7 @@ fi
 
 #submit the last job
 pbsfile=$shrundir/qsubj$countj.pbs #/u/sciteam/chunli/scratch/chunli/arcticdem_08_canada_baffin/qsubj1.pbs
-cp /home/chunlidai/blue/apps/landslide/template/parallel.sbatch $pbsfile
+cp ./template/parallel.sbatch $pbsfile
 newtext=$ofile
 oldtext="/home/chunli/chunliwork/work/landslide/testparallel/joblist"
 echo $oldtext $newtext  

@@ -12,7 +12,7 @@ currentdir=pwd;
 %addpath(genpath([macdir,'/data/chunli/landslide/']));
 %addpath(genpath([macdir,'/data/chunli/scripts/']));
 %addpath(genpath([macdir,'/home/dai.56/arcticdemapp/landslide/code1/']));
-%addpath(genpath([codedir]));
+addpath(genpath([codedir]));
 
 shpname='./GSHHS/GSHHS_f_L1.shp';% a priori coastline shapefile
 
