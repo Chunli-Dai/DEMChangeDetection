@@ -12,6 +12,8 @@ Data/Software requirement:
 3\ SLURM job management,
 4\ (Optional) setsm software (https://github.com/setsmdeveloper/SETSM) may be installed and executable in the command line if you choose setsm for DEM coregistration. 
 
+Versions the software has been tested on: Matlab r2020a, gdal/3.7.0
+
 #######################
 
 Output files: Elevation change data for an area size of 2 km by 2km.
