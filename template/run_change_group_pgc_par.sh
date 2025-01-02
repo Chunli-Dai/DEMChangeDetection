@@ -32,14 +32,15 @@ ln -fs ../job*pbs .
 echo $inputtype > input.txt
 echo $latloneq >> input.txt
 jobid=`qsub -N job1 jobpar.pbs`
+jobid=$(sbatch --job-name=job1 jobpar.pbs)
 
 #wait until this job is done to run the second job
 #while false
 while true
 do
 sleep 5s #wait 5 seconds
-out=`qstat $jobid`
-status=`echo $out|awk '{print $19}'`
+out=$(squeue -j $jobid)
+status=$(echo "$out" | awk 'NR==2 {print $5}')  # $5 is the column for the job state
 #echo $status 
 if [[ "$status" == "C" ]]
 then
