@@ -1,4 +1,5 @@
 How to run the code:
+
 Step 1: copy template/* to your work directory.
 Step 2: Download example data (1GB) to your work directory and unzip it: https://drive.google.com/file/d/1G5VHwl334AbmMIsBwHYQciEgOHrpZh9N/view?usp=sharing 
 Step 3: Update paramters in constant.m and prepare files tilelist or aoi.txt (provided for this example):
