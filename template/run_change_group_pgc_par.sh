@@ -31,7 +31,6 @@ ln -fs ../job*pbs .
 
 echo $inputtype > input.txt
 echo $latloneq >> input.txt
-jobid=`qsub -N job1 jobpar.pbs`
 jobid=$(sbatch --job-name=job1 jobpar.pbs)
 
 #wait until this job is done to run the second job
