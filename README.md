@@ -1,15 +1,15 @@
 How to run the code:
 Step 1: copy template/* to your work directory.
-Step 2: Update paramters and prepare tilelist
-Step 3: run ./run_change_group_pgc_par.sh (see also template/steps.sh)
+Step 2: Download example data (1GB) to your work directory and unzip it: https://drive.google.com/file/d/1G5VHwl334AbmMIsBwHYQciEgOHrpZh9N/view?usp=sharing 
+Step 3: Update paramters in constant.m and prepare files tilelist or aoi.txt (provided for this example):
+        In constant.m, make sure stripdir and codedir is correct.
+Step 4: run nohup ./run_change_group_pgc_par.sh > outrun1 &
 
-Parameters need to be changed:
-1\ In constant.m, change stripdir and codedir.
-e.g. stripdir='/fs/project/howat.4/EarthDEM/region*/strips_unf/2m/';
-         where stripdir is the directory of EarthDEM data.
-
-Data/Software preparation:
-1\ (Optional) setsm software may be installed and executable in the command line if you choose setsm for DEM coregistration. 
+Data/Software requirement:
+1\ Matlab license, and matlab installed on linux system as a module,
+2\ gdal installed as a module,
+3\ SLURM job management,
+4\ (Optional) setsm software (https://github.com/setsmdeveloper/SETSM) may be installed and executable in the command line if you choose setsm for DEM coregistration. 
 
 #######################
 Output files: Elevation change data for an area size of 2 km by 2km.
