@@ -1,6 +1,6 @@
 
 %stripdir='/fs/project/howat.4/EarthDEM/region*/strips_unf/2m/'; %Directory of strip DEM files.
-stripdir='./exdata/';
+stripdir='./exdata/'; %Directory of DEMs data
 codedir='./code1/';  %Directory of codes.
 
 % 1 assume event time known; 0 assume time unknown
