@@ -1,7 +1,7 @@
 
 %stripdir='/fs/project/howat.4/EarthDEM/region*/strips_unf/2m/'; %Directory of strip DEM files.
-stripdir='/home/chunlidai/blue/data/ArcticDEMdata/arcticdem_08_canada_baffin/';
-codedir='/home/chunlidai/blue/apps/landslide/code1clean/';  %Directory of codes.
+stripdir='./exdata/';
+codedir='./code1/';  %Directory of codes.
 
 % 1 assume event time known; 0 assume time unknown
 eqepoch=0;timefix=0; %Recommend 0 0
@@ -13,7 +13,7 @@ smlarea=200; %Recommend 200. To remove clusters smaller than this; square meters
 %In proposal, it sayes "disturbance areas commonly exceed 20 ha (200 000 m^2)"
 % Ashley's polygons: minimum area 1e3 m^2, median area 11e3 m^2, mean area 24e3.
 
-mons=7;mone=8; %mon>=5&mon<=10; %mons, start month of snow-free seasons. %mone, end month of snow free months.
+%mons=7;mone=8; %mon>=5&mon<=10; %mons, start month of snow-free seasons. %mone, end month of snow free months.
 		%suggest to use all seasons; For latitude 80N, use July and August for summer;
 		%For latitude 70N, use June to September for summer.
 mons=1;mone=12; %all season.
@@ -33,7 +33,7 @@ flagfiltercoreg=0;  %Recommend 0 (Not apply the filtering mask).
 		% Due to the improvement of coregistration, the cloudy image is not filtered out in the offset re-adjustment step.
 	         % Check ~/chunliwork/landslide/alaska3c/site1/5kmoffsetErrMax_filter/ 
 
-coregflag=3;%Recommend 8. 1 parameter (vertical), 3 parameter (Ian's); 7 parameter (MJ's); 8, MJ's setsm coregistration with 3 parameters.
+coregflag=3;%Recommend 3. 1 parameter (vertical), 3 parameter (Ian's); 7 parameter (MJ's); 8, MJ's setsm coregistration with 3 parameters.
 %coregflag=3;% use 3 if we are using scheduler.F90 for bundling jobs. (coregflag=8) setsm is not compatible with scheduler.F90 since setsm use mpi. -> successful tested in arcticdem_09_canada_victoria with coregflag=8!
 
 maxdt=1e9; % Recommend 1e9. in days;  filter out cross-track collected more than maxdt; %Recommend 1e9 (no limit) 
