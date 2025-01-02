@@ -13,6 +13,7 @@ Data/Software requirement:
 4\ (Optional) setsm software (https://github.com/setsmdeveloper/SETSM) may be installed and executable in the command line if you choose setsm for DEM coregistration. 
 
 #######################
+
 Output files: Elevation change data for an area size of 2 km by 2km.
 It is suggested to run two scenarios. One is using summer (July August) data only, the other is using data from all seasons.
 
