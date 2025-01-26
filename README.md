@@ -14,6 +14,8 @@ Data/Software requirement:
 
 Versions the software has been tested on: Matlab r2020a, gdal/3.7.0
 
+Code for deep learning and training is Chunli_Detectron2_Tutorial_pub.ipynb, which has been tested/run on Google Colab.
+
 #######################
 
 Output files: Elevation change data for an area size of 2 km by 2km.
