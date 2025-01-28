@@ -38,6 +38,8 @@ coregflag=3;%Recommend 3. 1 parameter (vertical), 3 parameter (Ian's); 7 paramet
 
 maxdt=1e9; % Recommend 1e9. in days;  filter out cross-track collected more than maxdt; %Recommend 1e9 (no limit) 
 year_start=0;year_end=9999; % min max year of measurement; year >= years and year <= yeare %Recommend no limit [0, 9999]
+date_start=datenum('00000101','yyyymmdd');
+date_end=datenum('99990101','yyyymmdd');
 flagoutput=0; %Recommend 0. if 1 output lots of figures and data for plotting, 0 save space;
 
 maxpxpy=15; maxpz=20; maxsigma=15;% Recommend: maxpxpy=15; maxpz=20;maxsigma=15;ArcticDEM with coregflag=8;
