@@ -15,6 +15,7 @@ Data/Software requirement:
 Versions the software has been tested on: Matlab r2020a, gdal/3.7.0
 
 Code for deep learning and training is Chunli_Detectron2_Tutorial_pub.ipynb, which has been tested/run on Google Colab.
+The input data is here: https://drive.google.com/file/d/12WApettnM6bR4YMkhkvaBK3Pw7KdsHTo/view?usp=sharing 
 
 #######################
 
